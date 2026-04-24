@@ -1,0 +1,5 @@
+:HL["/_next/static/chunks/0dtizssyc0a~o.css","style"]
+:HL["/_next/static/media/bahnschrift-s.p.0gec2mpvy3sn6.ttf","font",{"crossOrigin":"","type":"font/ttf"}]
+:HL["/_next/static/media/garamond_bold-s.p.0qt~~l81q7hei.ttf","font",{"crossOrigin":"","type":"font/ttf"}]
+:HL["/_next/static/media/garamond_regular-s.p.13cmv45fqg.0g.ttf","font",{"crossOrigin":"","type":"font/ttf"}]
+0:{"tree":{"name":"","param":null,"prefetchHints":16,"slots":{"children":{"name":"__PAGE__","param":null,"prefetchHints":0,"slots":null}}},"staleTime":300,"buildId":"Jj6IYNLCClIDYcu46IVwV"}
