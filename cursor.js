@@ -2,6 +2,11 @@
  * Custom Cursor System
  * Matches the dark premium aesthetic of the portfolio.
  * Desktop only — preserves native cursor on touch/mobile devices.
+ *
+ * Performance architecture:
+ *   Dot  → follows mouse DIRECTLY in mousemove handler (zero-frame delay)
+ *   Halo → trails with smooth easing in a single rAF loop (premium feel)
+ *   Both are independent fixed elements with their own transforms.
  */
 (function () {
   "use strict";
@@ -17,7 +22,7 @@
   const CFG = {
     dotSize: 6,
     haloSize: 32,
-    easing: 0.15,
+    haloEasing: 0.12,
     hoverScale: 1.5,
     haloHoverScale: 1.6,
     rippleDuration: 750,
@@ -26,29 +31,37 @@
     accentColor: "139, 181, 150", // #8bb596 as RGB
   };
 
+  const HALF_DOT = CFG.dotSize / 2;
+  const HALF_HALO = CFG.haloSize / 2;
+
   /* ── State ── */
   let mx = -100,
-    my = -100; // mouse position
-  let cx = -100,
-    cy = -100; // cursor position (eased)
+    my = -100; // raw mouse position
+  let hx = -100,
+    hy = -100; // halo eased position
   let hovering = false;
+  let cursorVisible = true;
   let raf;
 
-  /* ── Create DOM elements ── */
-  const cursor = document.createElement("div");
-  cursor.className = "cc-cursor";
+  /* ── Create DOM: dot and halo as independent fixed elements ── */
+  const dotEl = document.createElement("div");
+  dotEl.className = "cc-dot-wrap";
 
-  const dot = document.createElement("div");
-  dot.className = "cc-dot";
+  const dotInner = document.createElement("div");
+  dotInner.className = "cc-dot";
+  dotEl.appendChild(dotInner);
 
-  const halo = document.createElement("div");
-  halo.className = "cc-halo";
+  const haloEl = document.createElement("div");
+  haloEl.className = "cc-halo-wrap";
 
-  cursor.appendChild(halo);
-  cursor.appendChild(dot);
-  document.body.appendChild(cursor);
+  const haloInner = document.createElement("div");
+  haloInner.className = "cc-halo";
+  haloEl.appendChild(haloInner);
 
-  /* ── Ripple container (positioned behind everything except bg) ── */
+  document.body.appendChild(haloEl);
+  document.body.appendChild(dotEl);
+
+  /* ── Ripple container ── */
   const rippleLayer = document.createElement("div");
   rippleLayer.className = "cc-ripple-layer";
   document.body.appendChild(rippleLayer);
@@ -79,16 +92,19 @@
       cursor: auto !important;
     }
 
-    .cc-cursor {
+    /* Shared wrapper style for both dot and halo */
+    .cc-dot-wrap,
+    .cc-halo-wrap {
       position: fixed;
-      top: 0; left: 0;
+      top: 0;
+      left: 0;
       pointer-events: none;
       z-index: 99999;
       will-change: transform;
     }
 
     .cc-dot {
-      position: absolute;
+      position: relative;
       width: ${CFG.dotSize}px;
       height: ${CFG.dotSize}px;
       border-radius: 50%;
@@ -107,7 +123,7 @@
     }
 
     .cc-halo {
-      position: absolute;
+      position: relative;
       width: ${CFG.haloSize}px;
       height: ${CFG.haloSize}px;
       border-radius: 50%;
@@ -203,15 +219,15 @@
   function onMouseOver(e) {
     if (e.target.closest(interactiveSelector)) {
       hovering = true;
-      dot.classList.add("hover");
-      halo.classList.add("hover");
+      dotInner.classList.add("hover");
+      haloInner.classList.add("hover");
     }
   }
   function onMouseOut(e) {
     if (e.target.closest(interactiveSelector)) {
       hovering = false;
-      dot.classList.remove("hover");
-      halo.classList.remove("hover");
+      dotInner.classList.remove("hover");
+      haloInner.classList.remove("hover");
     }
   }
   document.addEventListener("mouseover", onMouseOver, { passive: true });
@@ -222,33 +238,43 @@
   document.addEventListener(
     "mouseover",
     (e) => {
-      if (e.target.closest(inputSelector)) cursor.style.opacity = "0";
+      if (e.target.closest(inputSelector)) {
+        cursorVisible = false;
+        dotEl.style.opacity = "0";
+        haloEl.style.opacity = "0";
+      }
     },
     { passive: true }
   );
   document.addEventListener(
     "mouseout",
     (e) => {
-      if (e.target.closest(inputSelector)) cursor.style.opacity = "1";
+      if (e.target.closest(inputSelector)) {
+        cursorVisible = true;
+        dotEl.style.opacity = "1";
+        haloEl.style.opacity = "1";
+      }
     },
     { passive: true }
   );
 
-  /* ── Mouse tracking ── */
+  /* ── Mouse tracking: dot updates IMMEDIATELY in the event handler ── */
   document.addEventListener(
     "mousemove",
     (e) => {
       mx = e.clientX;
       my = e.clientY;
+      // Dot follows mouse with zero delay — written directly in the input event
+      dotEl.style.transform = `translate3d(${mx}px,${my}px,0)`;
     },
     { passive: true }
   );
 
-  /* ── Render loop with easing ── */
+  /* ── rAF loop: only for halo easing (single loop, lightweight) ── */
   function render() {
-    cx += (mx - cx) * CFG.easing;
-    cy += (my - cy) * CFG.easing;
-    cursor.style.transform = `translate3d(${cx}px, ${cy}px, 0)`;
+    hx += (mx - hx) * CFG.haloEasing;
+    hy += (my - hy) * CFG.haloEasing;
+    haloEl.style.transform = `translate3d(${hx}px,${hy}px,0)`;
     raf = requestAnimationFrame(render);
   }
   raf = requestAnimationFrame(render);
