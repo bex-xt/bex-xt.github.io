@@ -20,9 +20,9 @@
     easing: 0.15,
     hoverScale: 1.5,
     haloHoverScale: 1.6,
-    rippleDuration: 700,
-    ripple2Delay: 120,
-    ripple2Duration: 900,
+    rippleDuration: 750,
+    ripple2Delay: 100,
+    ripple2Duration: 950,
     accentColor: "139, 181, 150", // #8bb596 as RGB
   };
 
@@ -147,9 +147,14 @@
     .cc-ripple {
       position: absolute;
       border-radius: 50%;
-      border: 1px solid rgba(255, 252, 245, 0.18);
-      box-shadow: 0 0 12px 2px rgba(${CFG.accentColor}, 0.08),
-                  inset 0 0 6px rgba(${CFG.accentColor}, 0.04);
+      border: 1.5px solid rgba(255, 252, 245, 0.45);
+      background: radial-gradient(circle,
+        rgba(${CFG.accentColor}, 0.12) 0%,
+        rgba(${CFG.accentColor}, 0.06) 40%,
+        transparent 70%
+      );
+      box-shadow: 0 0 18px 4px rgba(${CFG.accentColor}, 0.22),
+                  inset 0 0 10px rgba(${CFG.accentColor}, 0.10);
       transform: translate(-50%, -50%) scale(0);
       opacity: 1;
       pointer-events: none;
@@ -160,17 +165,25 @@
     }
 
     .cc-ripple.secondary {
-      border-color: rgba(${CFG.accentColor}, 0.12);
-      box-shadow: 0 0 18px 4px rgba(${CFG.accentColor}, 0.06);
+      border-color: rgba(${CFG.accentColor}, 0.35);
+      background: radial-gradient(circle,
+        rgba(${CFG.accentColor}, 0.08) 0%,
+        rgba(${CFG.accentColor}, 0.03) 50%,
+        transparent 70%
+      );
+      box-shadow: 0 0 24px 6px rgba(${CFG.accentColor}, 0.16);
     }
 
     @keyframes cc-ripple-expand {
       0% {
         transform: translate(-50%, -50%) scale(0);
+        opacity: 1;
+      }
+      30% {
         opacity: 0.7;
       }
-      40% {
-        opacity: 0.4;
+      60% {
+        opacity: 0.35;
       }
       100% {
         transform: translate(-50%, -50%) scale(1);
@@ -284,10 +297,10 @@
     const y = e.clientY;
 
     /* Primary ripple */
-    spawnRipple(x, y, 120, CFG.rippleDuration, 0, false);
+    spawnRipple(x, y, 90, CFG.rippleDuration, 0, false);
 
     /* Secondary softer ripple */
-    spawnRipple(x, y, 180, CFG.ripple2Duration, CFG.ripple2Delay, true);
+    spawnRipple(x, y, 140, CFG.ripple2Duration, CFG.ripple2Delay, true);
   });
 
   /* ── Cleanup on page hide ── */
